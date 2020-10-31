@@ -1,0 +1,319 @@
+/*
+This file is part of the iText (R) project.
+Copyright (c) 1998-2020 iText Group NV
+Authors: iText Software.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License version 3
+as published by the Free Software Foundation with the addition of the
+following permission added to Section 15 as permitted in Section 7(a):
+FOR ANY PART OF THE COVERED WORK IN WHICH THE COPYRIGHT IS OWNED BY
+ITEXT GROUP. ITEXT GROUP DISCLAIMS THE WARRANTY OF NON INFRINGEMENT
+OF THIRD PARTY RIGHTS
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU Affero General Public License for more details.
+You should have received a copy of the GNU Affero General Public License
+along with this program; if not, see http://www.gnu.org/licenses or write to
+the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+Boston, MA, 02110-1301 USA, or download the license from the following URL:
+http://itextpdf.com/terms-of-use/
+
+The interactive user interfaces in modified source and object code versions
+of this program must display Appropriate Legal Notices, as required under
+Section 5 of the GNU Affero General Public License.
+
+In accordance with Section 7(b) of the GNU Affero General Public License,
+a covered work must retain the producer line in every PDF that is created
+or manipulated using iText.
+
+You can be released from the requirements of the license by purchasing
+a commercial license. Buying such a license is mandatory as soon as you
+develop commercial activities involving the iText software without
+disclosing the source code of your own applications.
+These activities include: offering paid services to customers as an ASP,
+serving PDFs on the fly in a web application, shipping iText with a closed
+source product.
+
+For more information, please contact iText Software Corp. at this
+address: sales@itextpdf.com
+*/
+using System;
+using System.IO;
+using iText.IO.Util;
+using iText.Kernel.Pdf;
+using iText.StyledXmlParser.Css.Media;
+using iText.StyledXmlParser.Resolver.Font;
+using iText.Svg.Exceptions;
+using iText.Svg.Processors;
+using iText.Svg.Processors.Impl;
+using iText.Svg.Renderers;
+using iText.Test;
+using iText.Test.Attributes;
+
+namespace iText.Svg.Processors.Impl.Font {
+    public class FontFaceTest : SvgIntegrationTest {
+        public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
+            .CurrentContext.TestDirectory) + "/resources/itext/svg/processors/impl/font/FontFaceTest/";
+
+        public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
+             + "/test/itext/svg/processors/impl/font/FontFaceTest/";
+
+        [NUnit.Framework.OneTimeSetUp]
+        public static void BeforeClass() {
+            ITextTest.CreateDestinationFolder(destinationFolder);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void DroidSerifWebFontTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifWebFontTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void DroidSerifLocalFontTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifLocalFontTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void DroidSerifLocalLocalFontTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifLocalLocalFontTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void DroidSerifLocalWithMediaFontTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifLocalWithMediaFontTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void DroidSerifLocalWithMediaRuleFontTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifLocalWithMediaRuleFontTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void FontSelectorTest01() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "fontSelectorTest01");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void FontFaceGrammarTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "fontFaceGrammarTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void FontFaceWoffTest01() {
+            RunTest("fontFaceWoffTest01");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void FontFaceWoffTest02() {
+            RunTest("fontFaceWoffTest02");
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(SvgLogMessageConstant.UNABLE_TO_RETRIEVE_FONT)]
+        public virtual void FontFaceTtcTest() {
+            //TODO (DEVSIX-2064) Cannot retrieve NotoSansCJK-Regular
+            RunTest("fontFaceTtcTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void FontFaceWoff2SimpleTest() {
+            RunTest("fontFaceWoff2SimpleTest");
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(SvgLogMessageConstant.UNABLE_TO_RETRIEVE_FONT)]
+        public virtual void FontFaceWoff2TtcTest() {
+            //TODO (DEVSIX-2064) Cannot retrieve NotoSansCJK-Regular
+            RunTest("fontFaceWoff2TtcTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void W3cProblemTest01() {
+            //TODO: In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
+            //See BlocksMetadataPadding001Test in io for decompression details
+            RunTest("w3cProblemTest01");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void W3cProblemTest02() {
+            try {
+                RunTest("w3cProblemTest02");
+            }
+            catch (OverflowException) {
+                return;
+            }
+            NUnit.Framework.Assert.Fail("In w3c test suite this font is labeled as invalid, " + "so the invalid negative value is expected while creating a glyph."
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void W3cProblemTest03() {
+            //TODO: silently omitted, decompression should fail.
+            //See HeaderFlavor001Test in io for decompression details
+            RunTest("w3cProblemTest03");
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.LogMessageConstant.FONT_SUBSET_ISSUE)]
+        public virtual void W3cProblemTest04() {
+            //TODO: silently omitted, decompression should fail. Browser loads font but don't draw glyph.
+            //See HeaderFlavor002Test in io for decompression details
+            //NOTE, iText fails on subsetting as expected.
+            RunTest("w3cProblemTest04");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void W3cProblemTest05() {
+            //TODO: In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
+            //See HeaderReserved001Test in io for decompression details
+            RunTest("w3cProblemTest05");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void W3cProblemTest06() {
+            //TODO: In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
+            //See TabledataHmtxTransform003Test in io for decompression details
+            RunTest("w3cProblemTest06");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void W3cProblemTest07() {
+            try {
+                RunTest("w3cProblemTest07");
+            }
+            catch (OverflowException) {
+                return;
+            }
+            NUnit.Framework.Assert.Fail("In w3c test suite this font is labeled as invalid, " + "so the invalid negative value is expected while creating a glyph."
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IncorrectFontNameTest01() {
+            RunTest("incorrectFontNameTest01");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IncorrectFontNameTest02() {
+            // The result of te test is FAIL. However we consider it to be correct.
+            // Although the font-family specified by the paragraph's class doesn't match the one of fontface,
+            // font's full name contains specified font-family and iText takes it into account.
+            RunTest("incorrectFontNameTest02");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IncorrectFontNameTest03() {
+            //Checks that font used in previous two files is correct
+            RunTest("incorrectFontNameTest03");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IncorrectFontNameTest04() {
+            RunTest("incorrectFontNameTest04");
+        }
+
+        [NUnit.Framework.Test]
+        [NUnit.Framework.Ignore("DEVSIX-1759 - unicode in font family and different result in dotnet")]
+        public virtual void FontFamilyTest01() {
+            RunTest("fontFamilyTest01");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ResolveFontsWithoutWriterProperties() {
+            String fileName = "fontSelectorTest";
+            ISvgConverterProperties properties = new SvgConverterProperties().SetFontProvider(new BasicFontProvider())
+                .SetMediaDeviceDescription(new MediaDeviceDescription(MediaType.ALL));
+            ConvertToSinglePage(new FileInfo(sourceFolder + fileName + ".svg"), new FileInfo(destinationFolder + fileName
+                 + ".pdf"), properties);
+            Compare(fileName, sourceFolder, destinationFolder);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ResolveFontsWithoutConverterPropertiesAndWriterProperties() {
+            String fileName = "resolveFonts_WithoutConverterPropertiesAndWriterProperties";
+            String svgFile = "fontSelectorTest";
+            ConvertToSinglePage(new FileInfo(sourceFolder + svgFile + ".svg"), new FileInfo(destinationFolder + fileName
+                 + ".pdf"));
+            Compare(fileName, sourceFolder, destinationFolder);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ResolveFontsWithAllProperties() {
+            String fileName = "resolveFonts_WithAllProperties";
+            String svgFile = "fontSelectorTest";
+            WriterProperties writerprops = new WriterProperties().SetCompressionLevel(0);
+            String baseUri = FileUtil.GetParentDirectory(new FileInfo(sourceFolder + svgFile + ".svg"));
+            ISvgConverterProperties properties = new SvgConverterProperties().SetBaseUri(baseUri).SetFontProvider(new 
+                BasicFontProvider()).SetMediaDeviceDescription(new MediaDeviceDescription(MediaType.ALL));
+            ConvertToSinglePage(new FileInfo(sourceFolder + svgFile + ".svg"), new FileInfo(destinationFolder + fileName
+                 + ".pdf"), properties, writerprops);
+            Compare(fileName, sourceFolder, destinationFolder);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ResolveFontsWithWriterProperties() {
+            String fileName = "resolveFonts_WithWriterProperties";
+            String svgFile = "fontSelectorTest";
+            WriterProperties writerprops = new WriterProperties().SetCompressionLevel(0);
+            ConvertToSinglePage(new FileInfo(sourceFolder + svgFile + ".svg"), new FileInfo(destinationFolder + fileName
+                 + ".pdf"), writerprops);
+            Compare(fileName, sourceFolder, destinationFolder);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ResolveFontsWithConverterPropsAndWriterProps() {
+            String fileName = "resolveFonts_WithConverterPropsAndWriterProps";
+            String svgFile = "fontSelectorTest";
+            WriterProperties writerprops = new WriterProperties().SetCompressionLevel(0);
+            String baseUri = FileUtil.GetParentDirectory(new FileInfo(sourceFolder + svgFile + ".svg"));
+            ISvgConverterProperties properties = new SvgConverterProperties().SetBaseUri(baseUri).SetFontProvider(new 
+                BasicFontProvider()).SetMediaDeviceDescription(new MediaDeviceDescription(MediaType.ALL));
+            ConvertToSinglePage(new FileStream(sourceFolder + svgFile + ".svg", FileMode.Open, FileAccess.Read), new FileStream
+                (destinationFolder + fileName + ".pdf", FileMode.Create), properties, writerprops);
+            Compare(fileName, sourceFolder, destinationFolder);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ResolveFontsWithConverterPropertiesAndEmptyUri() {
+            String fileName = "resolveFonts_WithConverterPropertiesAndEmptyUri";
+            String svgFile = "fontSelectorTest";
+            ISvgConverterProperties properties = new SvgConverterProperties().SetBaseUri("").SetFontProvider(new BasicFontProvider
+                ()).SetMediaDeviceDescription(new MediaDeviceDescription(MediaType.ALL));
+            ConvertToSinglePage(new FileInfo(sourceFolder + svgFile + ".svg"), new FileInfo(destinationFolder + fileName
+                 + ".pdf"), properties);
+            Compare(fileName, sourceFolder, destinationFolder);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ResolveFontsWithConverterPropertiesAndNullUri() {
+            String fileName = "resolveFonts_WithConverterPropertiesAndNullUri";
+            String svgFile = "fontSelectorTest";
+            ISvgConverterProperties properties = new SvgConverterProperties().SetBaseUri(null).SetFontProvider(new BasicFontProvider
+                ()).SetMediaDeviceDescription(new MediaDeviceDescription(MediaType.ALL));
+            ConvertToSinglePage(new FileInfo(sourceFolder + svgFile + ".svg"), new FileInfo(destinationFolder + fileName
+                 + ".pdf"), properties);
+            Compare(fileName, sourceFolder, destinationFolder);
+        }
+
+        // TODO DEVSIX-2113
+        // This test passes correctly when baseUri is set manually. Remove SvgConverterProperties and use convertToSinglePage(File, File) method instead.
+        // It must produce the same pdf as the one with a pre-defined baseUri does
+        [NUnit.Framework.Test]
+        public virtual void ResolveFontsDefaultUri() {
+            SvgConverterProperties properties = new SvgConverterProperties();
+            properties.SetBaseUri(sourceFolder);
+            String fileName = "fontSelectorTest02";
+            ConvertToSinglePage(new FileInfo(sourceFolder + fileName + ".svg"), new FileInfo(destinationFolder + fileName
+                 + ".pdf"), properties);
+            Compare(fileName, sourceFolder, destinationFolder);
+        }
+
+        private void RunTest(String fileName) {
+            Convert(sourceFolder + fileName + ".svg", destinationFolder + fileName + ".pdf");
+            Compare(fileName, sourceFolder, destinationFolder);
+        }
+    }
+}
